@@ -266,13 +266,13 @@ func TestIter_Chain(t *testing.T) {
 		values     []collections.Data
 	}
 	type args struct {
-		other IterTrait
+		other IterTraitSlice
 	}
 	tests := []struct {
 		name   string
 		fields fields
 		args   args
-		want   IterTrait
+		want   IterTraitSlice
 	}{
 		{
 			name: "should chain two iterators",
@@ -307,7 +307,6 @@ func TestIter_Chain(t *testing.T) {
 				currentIdx: tt.fields.currentIdx,
 				values:     tt.fields.values,
 			}
-
 			if got := i.Chain(tt.args.other); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Chain() = got %v, want %v", got, tt.want)
 			}
@@ -453,7 +452,7 @@ func TestIter_Eq(t *testing.T) {
 		values     []collections.Data
 	}
 	type args struct {
-		other IterTrait
+		other IterTraitSlice
 	}
 	tests := []struct {
 		name   string
@@ -598,7 +597,7 @@ func TestIter_Filter(t *testing.T) {
 		name   string
 		fields fields
 		args   args
-		want   IterTrait
+		want   IterTraitSlice
 	}{
 		{
 			name: "should filter out all positive numbers",
@@ -613,9 +612,9 @@ func TestIter_Filter(t *testing.T) {
 			args: args{
 				f: func(d collections.Data) bool {
 					if d.Int()%2 == 0 {
-						return true
+						return false
 					}
-					return false
+					return true
 				},
 			},
 			want: &Iter{
@@ -638,9 +637,9 @@ func TestIter_Filter(t *testing.T) {
 			args: args{
 				f: func(d collections.Data) bool {
 					if d.Int()%2 == 0 {
-						return true
+						return false
 					}
-					return false
+					return true
 				},
 			},
 			want: &Iter{
@@ -734,49 +733,6 @@ func TestIter_Find(t *testing.T) {
 	}
 }
 
-func TestIter_Flatten(t *testing.T) {
-	type fields struct {
-		currentIdx int
-		values     []collections.Data
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		want   IterTrait
-	}{
-		{
-			name: "should return itself since the data is already flat",
-			fields: fields{
-				currentIdx: 0,
-				values: []collections.Data{
-					collections.IntValue(21),
-					collections.IntValue(11),
-					collections.IntValue(221),
-				},
-			},
-			want: &Iter{
-				currentIdx: 0,
-				values: []collections.Data{
-					collections.IntValue(21),
-					collections.IntValue(11),
-					collections.IntValue(221),
-				},
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			i := &Iter{
-				currentIdx: tt.fields.currentIdx,
-				values:     tt.fields.values,
-			}
-			if got := i.Flatten(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Flatten() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func TestIter_Fold(t *testing.T) {
 	type fields struct {
 		currentIdx int
@@ -830,7 +786,7 @@ func TestIter_Ge(t *testing.T) {
 		values     []collections.Data
 	}
 	type args struct {
-		other IterTrait
+		other IterTraitSlice
 	}
 	tests := []struct {
 		name   string
@@ -944,7 +900,7 @@ func TestIter_Gt(t *testing.T) {
 		values     []collections.Data
 	}
 	type args struct {
-		other IterTrait
+		other IterTraitSlice
 	}
 	tests := []struct {
 		name   string
@@ -1156,7 +1112,7 @@ func TestIter_Le(t *testing.T) {
 		direction  _direction
 	}
 	type args struct {
-		other IterTrait
+		other IterTraitSlice
 	}
 	tests := []struct {
 		name   string
@@ -1289,7 +1245,7 @@ func TestIter_Lt(t *testing.T) {
 		direction  _direction
 	}
 	type args struct {
-		other IterTrait
+		other IterTraitSlice
 	}
 	tests := []struct {
 		name   string
@@ -1389,7 +1345,7 @@ func TestIter_Map(t *testing.T) {
 		name   string
 		fields fields
 		args   args
-		want   IterTrait
+		want   IterTraitSlice
 	}{
 		{
 			name: "should double all the values",
@@ -1548,7 +1504,7 @@ func TestIter_Ne(t *testing.T) {
 		direction  _direction
 	}
 	type args struct {
-		other IterTrait
+		other IterTraitSlice
 	}
 	tests := []struct {
 		name   string

@@ -8,7 +8,7 @@ import (
 )
 
 func factorial(n int) int {
-	iter := iterator.New()
+	iter := iterator.NewIter()
 	for i := 1; i <= n; i++ {
 		iter.Append(collections.IntValue(i))
 	}
