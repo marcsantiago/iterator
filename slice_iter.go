@@ -1,6 +1,8 @@
 package iterator
 
 import (
+	"fmt"
+
 	"github.com/marcsantiago/collections"
 )
 
@@ -19,9 +21,9 @@ type Iter struct {
 	shouldCycle bool
 }
 
-var _ IterTrait = (*Iter)(nil)
+var _ IterTraitSlice = (*Iter)(nil)
 
-func New() *Iter {
+func NewIter() *Iter {
 	return &Iter{}
 }
 
@@ -77,7 +79,7 @@ func (i *Iter) Any(f func(d collections.Data) bool) bool {
 }
 
 // Chain Takes two iterators and creates a new iterator over both in sequence
-func (i *Iter) Chain(other IterTrait) IterTrait {
+func (i *Iter) Chain(other IterTraitSlice) IterTraitSlice {
 	values := make([]collections.Data, 0, len(i.values)+other.Len())
 	for _, value := range i.values {
 		values = append(values, value)
@@ -171,6 +173,7 @@ func (i *Iter) Count() int {
 			count++
 		}
 	}
+	i.currentIdx = len(i.values)
 	return count
 }
 
@@ -180,7 +183,7 @@ func (i *Iter) Cycle() {
 }
 
 // Eq determines if this iterator is the same as the other iterator
-func (i *Iter) Eq(other IterTrait) bool {
+func (i *Iter) Eq(other IterTraitSlice) bool {
 	if i.Len() != other.Len() {
 		return false
 	}
@@ -215,10 +218,10 @@ func (i *Iter) Iterate() <-chan collections.Data {
 }
 
 // Filter removes all values by which the comparison function returns true
-func (i *Iter) Filter(f func(d collections.Data) bool) IterTrait {
+func (i *Iter) Filter(f func(d collections.Data) bool) IterTraitSlice {
 	var k int
 	for j := range i.values {
-		if !f(i.values[j]) {
+		if f(i.values[j]) {
 			i.values[k] = i.values[j]
 			k++
 			continue
@@ -239,11 +242,6 @@ func (i *Iter) Find(f func(d collections.Data) bool) collections.Data {
 	return nil
 }
 
-// Flatten is currently a stub as Iter only supports 1 dimensional slices
-func (i *Iter) Flatten() IterTrait {
-	return i
-}
-
 // Fold folds all values based on the fold function that are Operable and returns a single Data value
 func (i *Iter) Fold(init collections.OperableData, f func(result collections.OperableData, next collections.OperableData) collections.Data) collections.Data {
 	result := init
@@ -255,8 +253,17 @@ func (i *Iter) Fold(init collections.OperableData, f func(result collections.Ope
 	return result.(collections.Data)
 }
 
+// FoldIntoMap folds all the values into a collections.Map
+func (i *Iter) FoldIntoMap(init IterTraitMap, f func(m IterTraitMap, key collections.Data) IterTraitMap) IterTraitMap {
+	result := init
+	for _, elem := range i.values {
+		f(result, elem)
+	}
+	return result
+}
+
 // Ge determines if this iterator is greater than the other iterator
-func (i *Iter) Ge(other IterTrait) bool {
+func (i *Iter) Ge(other IterTraitSlice) bool {
 	if i.Len() > other.Len() {
 		return true
 	}
@@ -267,7 +274,7 @@ func (i *Iter) Ge(other IterTrait) bool {
 }
 
 // Gt determines if this iterator is greater than or equal to the other iterator
-func (i *Iter) Gt(other IterTrait) bool {
+func (i *Iter) Gt(other IterTraitSlice) bool {
 	if i.Len() > other.Len() {
 		return true
 	}
@@ -295,7 +302,7 @@ func (i *Iter) Gt(other IterTrait) bool {
 }
 
 // Inspect allows debug lines to be called in-between chained events
-func (i *Iter) Inspect(f func(d collections.Data)) IterTrait {
+func (i *Iter) Inspect(f func(d collections.Data)) IterTraitSlice {
 	for j := range i.values {
 		f(i.values[j])
 	}
@@ -324,7 +331,7 @@ func (i *Iter) Last() (int, collections.Data) {
 }
 
 // Le determines if this iterator is less than the other iterator
-func (i *Iter) Le(other IterTrait) bool {
+func (i *Iter) Le(other IterTraitSlice) bool {
 	if i.Len() < other.Len() {
 		return true
 	}
@@ -340,7 +347,7 @@ func (i *Iter) Len() int {
 }
 
 // Lt determines if this iterator is less than or equal to the other iterator
-func (i *Iter) Lt(other IterTrait) bool {
+func (i *Iter) Lt(other IterTraitSlice) bool {
 	if i.Len() < other.Len() {
 		return true
 	}
@@ -368,7 +375,7 @@ func (i *Iter) Lt(other IterTrait) bool {
 }
 
 // Map takes a closure and creates an iterator which calls that closure on each element
-func (i *Iter) Map(f func(d collections.Data) collections.Data) IterTrait {
+func (i *Iter) Map(f func(d collections.Data) collections.Data) IterTraitSlice {
 	for ii := 0; ii < len(i.values); ii++ {
 		i.values[ii] = f(i.values[ii])
 	}
@@ -404,10 +411,11 @@ func (i *Iter) Min() collections.Data {
 }
 
 // Ne determines if this iterator is different from the other iterator
-func (i *Iter) Ne(other IterTrait) bool {
+func (i *Iter) Ne(other IterTraitSlice) bool {
 	return !i.Eq(other)
 }
 
+// Nth ...
 func (i *Iter) Nth(n int) collections.Data {
 	if n > len(i.values) {
 		return nil
@@ -474,6 +482,10 @@ func (i *Iter) Product() collections.Data {
 
 // Reduce reduces all values based on the fold function that are Operable and returns a single Data value
 func (i *Iter) Reduce(f func(a, b collections.Data) collections.Data) collections.Data {
+	if len(i.values) == 0 {
+		return nil
+	}
+
 	result := i.values[0].(collections.Data)
 	for ii := 0; ii < len(i.values); ii++ {
 		result = f(result, i.values[ii])
@@ -484,6 +496,11 @@ func (i *Iter) Reduce(f func(a, b collections.Data) collections.Data) collection
 // Take creates an iterator that yields the first n elements, or fewer if the underlying iterator ends sooner.
 func (i *Iter) Take(n int) {
 	i.values = i.values[:n]
+}
+
+// String to satisfy the stringer interface
+func (i *Iter) String() string {
+	return fmt.Sprintf("%+v", i.values)
 }
 
 // Sum sums the elements of an iterator.
@@ -507,6 +524,35 @@ func (i *Iter) Sum() collections.Data {
 		}
 	}
 	return result
+}
+
+// Zip combines the value for from Iter as the key in Element and other's Data as the value
+// the Zip is only as long as the min length of collections and returns a []collection.Element
+func (i *Iter) Zip(other []collections.Data) []collections.Element {
+	elements := make([]collections.Element, 0, len(i.values))
+	for i, value := range i.values {
+		if i > len(other) {
+			break
+		}
+		elements = append(elements, collections.Element{
+			Key:   value,
+			Value: other[i],
+		})
+	}
+	return elements
+}
+
+// ZipIntoMap combines the value for from Iter as the key in Element and other's Data as the value
+// the Zip is only as long as the min length of collections and returns an implementation of IterTraitMap
+func (i *Iter) ZipIntoMap(other []collections.Data) IterTraitMap {
+	m := collections.NewGenericMap()
+	for i, value := range i.values {
+		if i > len(other) {
+			break
+		}
+		m.Set(value, other[i])
+	}
+	return NewMapIterFromMap(m)
 }
 
 func abs(n int64) int64 {

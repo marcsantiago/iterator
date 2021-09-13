@@ -20,9 +20,9 @@ func main() {
 		}).
 		Filter(func(d collections.Data) bool {
 			if d.Int()%2 == 0 {
-				return false
+				return true
 			}
-			return true
+			return false
 		}).
 		Inspect(func(d collections.Data) {
 			fmt.Printf("made it through the filter %v\n", d)
